@@ -104,9 +104,12 @@ bool Type::operator!=(const Type& other) const {
 
 bool Type::operator<(const Type& other) const {
     if (base_type_ == other.base_type_) {
-        if (parent_ == NULL && other.parent_ != NULL)
+        if (parent_ != NULL && other.parent_ != NULL) {
+            return *parent_ < *other.parent_;
+        }
+        if (parent_ == NULL)
             return true;
-        else
+        if (other.parent_ == NULL)
             return false;
     }
     return base_type_ < other.base_type_;
