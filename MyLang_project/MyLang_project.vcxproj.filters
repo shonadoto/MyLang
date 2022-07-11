@@ -97,21 +97,13 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="program.txt">
-      <Filter>Файлы ресурсов</Filter>
-    </Text>
-    <Text Include="import.txt">
-      <Filter>Файлы ресурсов</Filter>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\..\..\..\Desktop\mylang\import.mylang">
       <Filter>Файлы ресурсов</Filter>
     </None>
     <None Include="..\..\..\..\Desktop\mylang\program.mylang">
       <Filter>Файлы ресурсов</Filter>
     </None>
-    <None Include="..\x64\Debug\standart_lib.mylang">
+    <None Include="standart_lib.mylang">
       <Filter>Файлы ресурсов</Filter>
     </None>
   </ItemGroup>

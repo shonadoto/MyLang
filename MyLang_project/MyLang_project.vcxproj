@@ -169,13 +169,9 @@
     <ClInclude Include="Type.h" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="import.txt" />
-    <Text Include="program.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\..\..\..\Desktop\mylang\import.mylang" />
     <None Include="..\..\..\..\Desktop\mylang\program.mylang" />
-    <None Include="..\x64\Debug\standart_lib.mylang" />
+    <None Include="standart_lib.mylang" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
