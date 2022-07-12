@@ -1593,8 +1593,9 @@ Type* SemanticsAnalyzer::EXPRESSION() {
         }
 
         if (tokenName() == "(") {
-            balance++;
-            st.push("(");
+            tokenNext();
+            type = EXPRESSION();
+            rpn.push_back({ type, "" });
             continue;
         }
 
@@ -1828,6 +1829,9 @@ Type* SemanticsAnalyzer::INITIALIZER_LIST() {
 }
 
 Type* SemanticsAnalyzer::METHOD_CALL(Type* var_type) {
+
+    if (var_type->baseType() == Type::TypeEnum::RANGE_2) var_type = new Type("range");
+
     tokenNext(); // from . to name
     std::string method_name = tokenName();
     tokenNext(); // from name to (
