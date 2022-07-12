@@ -482,6 +482,8 @@ void RpnCreator::OPERATOR() {
             else if (tokenName() == ")")
                 break;
         }
+        pushRpn(new RPN::Const(new Data::Char('\n')));
+        pushRpn(new RPN::Print());
         tokenNext(); // from ) to ;
         tokenNext(); // from ; to smth
     }

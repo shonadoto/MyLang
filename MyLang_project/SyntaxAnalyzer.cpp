@@ -893,7 +893,7 @@ void SyntaxAnalyzer::PRIORITY_16() {
 
     if (tokenName() == "=" || tokenName() == "+=" || tokenName() == "-=" ||
         tokenName() == "*=" || tokenName() == "/=" || tokenName() == "%=" ||
-        tokenName() == "**" || tokenName() == "<<=" || tokenName() == ">>=" ||
+        tokenName() == "**=" || tokenName() == "<<=" || tokenName() == ">>=" ||
         tokenName() == "&=" || tokenName() == "|=" || tokenName() == "^=") {
         tokenNext(); // from oper to p16
         PRIORITY_16(); // from p16 to smth
