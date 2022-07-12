@@ -1,7 +1,7 @@
 void array<bool>.sort() {
 	if (it.size() == 1) return;
 
-	array<int> left, right;
+	array<bool> left, right;
 	int k = 0; 
 	while (k < it.size() / 2) {
 		left.pushBack(it[k]);
@@ -43,7 +43,7 @@ void array<bool>.sort() {
 void array<char>.sort() {
 	if (it.size() == 1) return;
 
-	array<int> left, right;
+	array<char> left, right;
 	int k = 0; 
 	while (k < it.size() / 2) {
 		left.pushBack(it[k]);
@@ -127,7 +127,7 @@ void array<int>.sort() {
 void array<float>.sort() {
 	if (it.size() == 1) return;
 
-	array<int> left, right;
+	array<float> left, right;
 	int k = 0; 
 	while (k < it.size() / 2) {
 		left.pushBack(it[k]);
@@ -169,7 +169,7 @@ void array<float>.sort() {
 void array<string>.sort() {
 	if (it.size() == 1) return;
 
-	array<int> left, right;
+	array<string> left, right;
 	int k = 0; 
 	while (k < it.size() / 2) {
 		left.pushBack(it[k]);
