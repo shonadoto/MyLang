@@ -53,6 +53,7 @@ private:
     void DECLARE_ITERATOR();
     void MOVE_ITERATOR();
     void SET_ITERATOR_VAR();
+    void DELETE_ITERATOR();
     void WHEN_COMPARE();
     void OPERATION();
     void CONST();

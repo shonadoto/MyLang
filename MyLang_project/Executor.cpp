@@ -402,6 +402,9 @@ void Executor::work() {
             case RPN::RpnEnum::SET_ITERATOR_VAR:
                 SET_ITERATOR_VAR();
                 break;
+            case RPN::RpnEnum::DELETE_ITERATOR:
+                DELETE_ITERATOR();
+                break;
             case RPN::RpnEnum::WHEN_COMPARE:
                 WHEN_COMPARE();
                 break;
@@ -645,6 +648,10 @@ void Executor::SET_ITERATOR_VAR() {
     }
 
     throw "Smth 2 in set iterator\'s variable.";
+}
+
+void Executor::DELETE_ITERATOR() {
+    iterators_.pop();
 }
 
 void Executor::WHEN_COMPARE() {

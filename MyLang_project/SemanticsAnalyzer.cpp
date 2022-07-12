@@ -1125,12 +1125,17 @@ Type* SemanticsAnalyzer::PRIORITY_2() {
                     throw SemanticsError("Can not indexate with type: " + left->toString() + ".", token());
                 if (*right != Type("int"))
                     throw SemanticsError("[] operator can get only int expression.", token());
-                if (left->isVar()) left->parent()->setIsVar(true);
+                if (left->isVar() && left->parent() != NULL) left->parent()->setIsVar(true);
                 bool lvalue = true;
-                if (left->baseType() == Type::TypeEnum::STRING)
+                if (left->baseType() == Type::TypeEnum::STRING) {
                     lvalue = false;
-                left = left->parent();
-                left->setIsVar(lvalue);
+                    left = new Type("char");
+                    left->setIsVar(lvalue);
+                }
+                else {
+                    left = left->parent();
+                    left->setIsVar(lvalue);
+                }
             }
         }
         else if (tokenName() == ".") {
@@ -1153,10 +1158,11 @@ Type* SemanticsAnalyzer::PRIORITY_3() {
     if (tokenName() == "**") {
         std::string operation = tokenName();
         tokenNext(); // from ** to p3
+        Type* right = PRIORITY_3(); // from p3 to smth
         if (analysis_stage_ == 0) {
             return new Type();
         }
-        Type* right = PRIORITY_3(); // from p3 to smth
+        
         Type* ret = operate(left, operation, right);
         return ret;
     }

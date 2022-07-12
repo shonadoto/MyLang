@@ -202,6 +202,8 @@ RPN::MoveIterator::MoveIterator() : Token(RpnEnum::MOVE_ITERATOR) {}
 
 RPN::SetIteratorVar::SetIteratorVar(int name) : name_(name), Token(RpnEnum::SET_ITERATOR_VAR) {}
 
+RPN::DeleteIterator::DeleteIterator() : Token(RpnEnum::DELETE_ITERATOR) {}
+
 int RPN::SetIteratorVar::name() { return name_; }
 
 void RPN::SetIteratorVar::show() {

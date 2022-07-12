@@ -683,6 +683,7 @@ void RpnCreator::FOR() {
     setRpn(p2, new RPN::ForGoto(cur_rpn_));
     setBreaks();
     setContinues(p2);
+    pushRpn(new RPN::DeleteIterator());
     prevTid();
 }
 

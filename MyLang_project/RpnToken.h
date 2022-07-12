@@ -30,7 +30,8 @@ namespace RPN {
 
     enum class RpnEnum {
         VAR, DECLARE_VAR, DELETE_VAR, GOTO, FALSE_GOTO, FOR_GOTO, RETURN_GOTO,
-        FUNC_CALL, GET_ARG, DEL_ARG_CNT, PRINT, INPUT, KILL, DECLARE_ITERATOR, MOVE_ITERATOR, SET_ITERATOR_VAR,
+        FUNC_CALL, GET_ARG, DEL_ARG_CNT, PRINT, INPUT, KILL, 
+        DECLARE_ITERATOR, MOVE_ITERATOR, SET_ITERATOR_VAR, DELETE_ITERATOR,
         WHEN_COMPARE, OPERATION, CONST, END, 
         CREATE_ARRAY, PUSH_ARRAY, POP_ARRAY, SIZE_ARRAY, SET_IT, DEL_IT,
         CAST,
@@ -168,6 +169,11 @@ namespace RPN {
     class MoveIterator : public Token {
     public:
         MoveIterator();
+    };
+
+    class DeleteIterator : public Token {
+    public:
+        DeleteIterator();
     };
 
     class WhenCompare : public Token {
