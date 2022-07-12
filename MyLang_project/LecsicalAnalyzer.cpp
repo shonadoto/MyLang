@@ -182,7 +182,8 @@ void LecsicalAnalyzer::createStateMachine() {
 
         // Comments
         {0, 33, "/"},
-        {33, 34, "/"}
+        {33, 34, "/"},
+        {33, 22, "="}
     };
 
     // terminals for states
