@@ -52,9 +52,6 @@ void LecsicalToken::tokenDebug() {
 	case LecsicalEnum::CONST_STRING:
 		std::cout << "CONST_STRING";
 		break;
-	case LecsicalEnum::CONST_RANGE:
-		std::cout << "CONST_RANGE";
-		break;
 	default:
 		break;
 	}

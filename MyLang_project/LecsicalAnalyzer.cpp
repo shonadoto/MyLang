@@ -104,22 +104,15 @@ void LecsicalAnalyzer::createStateMachine() {
 
         // Int or Float
         {0, 2, digits},
-        {2, 2, digits},
-        {2, 3, "."},
-        {3, 37, digits},
-        {37, 37, digits},
-        {37, 4, "Ee"},
-        {4, 39, "+-"},
-        {39, 5, digits},
-        {4, 5, digits},
-        {5, 5, digits},
-        {3, 30, "."},
-        {30, 31, digits},
-        {31, 31, digits},
-        {31, 35, "."},
-        {35, 36, "."},
-        {36, 38, digits},
-        {38, 38, digits},
+        {2, 2, digits}, // int
+        {2, 3, "."}, // int_point
+        {3, 37, digits}, // float
+        {37, 37, digits}, // float
+        {37, 4, "Ee"}, // none
+        {4, 39, "+-"}, // none
+        {39, 5, digits}, // float
+        {4, 5, digits}, // float
+        {5, 5, digits}, // float
 
         // String
         {0, 6, "\""},
@@ -179,6 +172,8 @@ void LecsicalAnalyzer::createStateMachine() {
 
         // Point
         {0, 32, "."},
+        {32, 36, "." },
+        {3, 38, "."},
 
         // Comments
         {0, 33, "/"},
@@ -219,14 +214,14 @@ void LecsicalAnalyzer::createStateMachine() {
         terminals_[28] = LecsicalEnum::OPERATION;
         terminals_[29] = LecsicalEnum::OPERATION;
         terminals_[30] = LecsicalEnum::NONE;
-        terminals_[31] = LecsicalEnum::CONST_RANGE;
+        terminals_[31] = LecsicalEnum::NONE;
         terminals_[32] = LecsicalEnum::POINT;
         terminals_[33] = LecsicalEnum::OPERATION;
         terminals_[34] = LecsicalEnum::COMMENT;
         terminals_[35] = LecsicalEnum::NONE;
-        terminals_[36] = LecsicalEnum::CONST_RANGE;
+        terminals_[36] = LecsicalEnum::OPERATION;
         terminals_[37] = LecsicalEnum::CONST_FLOAT;
-        terminals_[38] = LecsicalEnum::CONST_RANGE;
+        terminals_[38] = LecsicalEnum::INT_DOUBLE_POINT;
         terminals_[39] = LecsicalEnum::NONE;
     }
 
@@ -276,6 +271,13 @@ void LecsicalAnalyzer::createTokens() {
                         cur_lecsem.pop_back();
                         tokens_.push_back(LecsicalToken(cur_lecsem, LecsicalEnum::CONST_INT, line_number, i - cur_lecsem.size() - 1, file_->fullPath()));
                         tokens_.push_back(LecsicalToken(".", LecsicalEnum::POINT, line_number, i - 1, file_->fullPath()));
+                    }
+                    else if (prev_terminal == LecsicalEnum::INT_DOUBLE_POINT) {
+                        cur_lecsem.pop_back();
+                        cur_lecsem.pop_back();
+
+                        tokens_.push_back(LecsicalToken(cur_lecsem, LecsicalEnum::CONST_INT, line_number, i - cur_lecsem.size() - 1, file_->fullPath()));
+                        tokens_.push_back(LecsicalToken("..", LecsicalEnum::OPERATION, line_number, i - 1, file_->fullPath()));
                     }
                     else if (prev_terminal != LecsicalEnum::SPACE)
                         tokens_.push_back(LecsicalToken(cur_lecsem, prev_terminal, line_number, i - cur_lecsem.size(), file_->fullPath()));

@@ -10,8 +10,8 @@ Type::Type(std::string type, Type* parent, bool is_var) {
     if (type == "char") base_type_ = TypeEnum::CHAR;
     if (type == "int") base_type_ = TypeEnum::INT;
     if (type == "float") base_type_ = TypeEnum::FLOAT;
+    if (type == "range") base_type_ = TypeEnum::RANGE_3;
     if (type == "string") base_type_ = TypeEnum::STRING;
-    if (type == "range") base_type_ = TypeEnum::RANGE;
     if (type == "array") base_type_ = TypeEnum::ARRAY;
 }
 
@@ -74,8 +74,11 @@ std::string Type::toString() const {
         case TypeEnum::STRING:
             return "string";
             break;
-        case TypeEnum::RANGE:
-            return "range";
+        case TypeEnum::RANGE_2:
+            return "range2";
+            break;
+        case TypeEnum::RANGE_3:
+            return "range3";
             break;
         case TypeEnum::ARRAY:
             return "array";

@@ -90,14 +90,16 @@ bool SemanticsAnalyzer::goodCast(Type* first, Type* second) {
             tInt = int(Type::TypeEnum::INT),
             tFloat = int(Type::TypeEnum::FLOAT),
             tString = int(Type::TypeEnum::STRING),
-            tRange = int(Type::TypeEnum::RANGE);
+            tRange_2 = int(Type::TypeEnum::RANGE_2),
+            tRange_3 = int(Type::TypeEnum::RANGE_3);
         std::map<int, std::vector<int>> casts = {
             {tBool, {tBool, tChar, tInt, tFloat, tString}},
             {tChar, {tBool, tChar, tInt, tFloat, tString}},
             {tInt, {tBool, tChar, tInt, tFloat, tString}},
             {tFloat, {tBool, tChar, tInt, tFloat, tString}},
             {tString, {tBool, tChar, tInt, tFloat, tString}},
-            {tRange, {}}
+            {tRange_2, {}},
+            {tRange_3, {}}
         };
 
         return std::find(casts[int(first->baseType())].begin(), casts[int(first->baseType())].end(), int(second->baseType())) != casts[int(first->baseType())].end();
@@ -403,6 +405,7 @@ void SemanticsAnalyzer::VARIABLE_DECLARATION() {
 
                 if (*var_type < Type("string") && *expr_type < Type("string"));
                 else if (*var_type == *expr_type);
+                else if (var_type->baseType() == Type::TypeEnum::RANGE_3 && expr_type->baseType() == Type::TypeEnum::RANGE_2);
                 else throw SemanticsError(error, token());
 
             }
@@ -550,7 +553,7 @@ void SemanticsAnalyzer::OPERATOR() {
                 throw SemanticsError("Can not use input with rvalue", token());
 
             if (analysis_stage_ == 1 &&
-                (expr_type->baseType() == Type::TypeEnum::ARRAY || expr_type->baseType() == Type::TypeEnum::RANGE))
+                (expr_type->baseType() == Type::TypeEnum::ARRAY || expr_type->baseType() == Type::TypeEnum::RANGE_2 || expr_type->baseType() == Type::TypeEnum::RANGE_3))
                 throw SemanticsError("Can not use input with array or range.", token());
 
             if (tokenName() == ",")
@@ -711,7 +714,8 @@ void SemanticsAnalyzer::FOR() {
 
     if (analysis_stage_ == 1) {
 
-        if (!(*var_type == Type("int") && *expr_type == Type("range"))
+        if (!(*var_type == Type("int") && *expr_type == Type(Type::TypeEnum::RANGE_2)) &&
+            !(*var_type == Type("int") && *expr_type == Type(Type::TypeEnum::RANGE_3))
             && !(*var_type == Type("char") && *expr_type == Type("string")) &&
             (expr_type->parent() == NULL || *var_type != expr_type->parent()))
             throw SemanticsError("Can not iterate with " + var_type->toString() + " by " + expr_type->toString() + ".", token());
@@ -1583,11 +1587,6 @@ Type* SemanticsAnalyzer::EXPRESSION() {
             continue;
         }
 
-        if (tokenType() == LecsicalEnum::CONST_RANGE) {
-            type = CONST_RANGE();
-            rpn.push_back({ type, "" });
-        }
-
         if (tokenType() == LecsicalEnum::CONST_STRING) {
             type = CONST_STRING();
             rpn.push_back({ type, "" });
@@ -1694,10 +1693,11 @@ int SemanticsAnalyzer::getPrior(std::string op) {
     if (op == "&") return 10;
     if (op == "^") return 11;
     if (op == "|") return 12;
-    if (op == "in") return 13;
-    if (op == "&&") return 14;
-    if (op == "||") return 15;
-    return 16;
+    if (op == "..") return 13;
+    if (op == "in") return 14;
+    if (op == "&&") return 15;
+    if (op == "||") return 16;
+    return 17;
 }
 
 bool SemanticsAnalyzer::isRightAssoc(std::string op) {
@@ -1792,15 +1792,6 @@ Type* SemanticsAnalyzer::CONST_FLOAT() {
     }
 
     Type* ret = new Type("float");
-    return ret;
-}
-
-Type* SemanticsAnalyzer::CONST_RANGE() {
-    if (analysis_stage_ == 0) {
-        return new Type();
-    }
-
-    Type* ret = new Type("range");
     return ret;
 }
 
@@ -1967,6 +1958,7 @@ Type* SemanticsAnalyzer::operate(Type* left, std::string operation, Type* right)
     std::string error = "Can not " + operation + " with " + left->toString() + " and " + right->toString() + ".";
 
     if (operation == "=") {
+        if (left->baseType() == Type::TypeEnum::RANGE_3 && right->baseType() == Type::TypeEnum::RANGE_2) return left;
         if (!left->isVar()) throw SemanticsError("Left operand must be lvalue", token());
         if (*left < Type("string") && *right < Type("string")) return left;
         if (left->baseType() == Type::TypeEnum::ARRAY && *right == Type("array", new Type())) return left;
@@ -2026,7 +2018,7 @@ Type* SemanticsAnalyzer::operate(Type* left, std::string operation, Type* right)
     }
 
     if (operation == "<" || operation == ">" || operation == "<=" || operation == ">=") {
-        if (*left == *right && *left < Type("range")) return new Type("bool");
+        if (*left == *right && *left < Type(Type::TypeEnum::RANGE_2)) return new Type("bool");
         throw SemanticsError(error, token());
     }
 
@@ -2051,7 +2043,8 @@ Type* SemanticsAnalyzer::operate(Type* left, std::string operation, Type* right)
 
     if (operation == "in") {
         if (right->parent() != NULL && *left == *(right->parent()) ||
-            *left == Type("int") && *right == Type(Type::TypeEnum::RANGE) ||
+            *left == Type("int") && *right == Type(Type::TypeEnum::RANGE_2) ||
+            *left == Type("int") && *right == Type(Type::TypeEnum::RANGE_3) ||
             *left == Type("char") && *right == Type("string")) return new Type("bool");
         throw SemanticsError(error, token());
     }
@@ -2063,6 +2056,12 @@ Type* SemanticsAnalyzer::operate(Type* left, std::string operation, Type* right)
             left->parent()->setIsVar(true);
             return left->parent();
         }
+        throw SemanticsError(error, token());
+    }
+
+    if (operation == "..") {
+        if (*left == Type("int") && *right == Type("int")) return new Type(Type::TypeEnum::RANGE_2);
+        if (*left == Type(Type::TypeEnum::RANGE_2) && *right == Type("int")) return new Type(Type::TypeEnum::RANGE_3);
         throw SemanticsError(error, token());
     }
 }

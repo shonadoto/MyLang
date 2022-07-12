@@ -482,7 +482,10 @@ void Executor::DECLARE_VAR() {
     case Type::TypeEnum::STRING:
         data = new Data::String();
         break;
-    case Type::TypeEnum::RANGE:
+    case Type::TypeEnum::RANGE_2:
+        data = new Data::Range();
+        break;
+    case Type::TypeEnum::RANGE_3:
         data = new Data::Range();
         break;
     case Type::TypeEnum::ARRAY:
@@ -877,6 +880,9 @@ void Executor::OPERATION() {
         break;
     case RPN::OperationEnum::ASSIGN_BIT_XOR:
         ASSIGN_BIT_XOR();
+        break;
+    case RPN::OperationEnum::DOUBLE_POINT:
+        DOUBLE_POINT();
         break;
     default:
         break;
@@ -4786,4 +4792,38 @@ void Executor::ASSIGN_BIT_XOR() {
         break;
     }
     main_stack_.push(value1);
+}
+
+
+void Executor::DOUBLE_POINT() {
+    Data::Data* value2 = main_stack_.top();
+    main_stack_.pop();
+    Data::Data* value1 = main_stack_.top();
+    main_stack_.pop();
+
+    Data::DataEnum type1 = value1->type(), type2 = value2->type();
+
+    Data::Data* push;
+
+    switch (type1)
+    {
+    case Data::DataEnum::INT: {
+        int val1 = static_cast<Data::Int*>(value1)->get();
+        int val2 = static_cast<Data::Int*>(value2)->get();
+        push = new Data::Range(val1, val2, 1);
+    }
+        break;
+    case Data::DataEnum::RANGE:
+    {
+        int from = static_cast<Data::Range*>(value1)->from();
+        int to = static_cast<Data::Range*>(value1)->to();
+        int step = static_cast<Data::Int*>(value2)->get();
+        push = new Data::Range(from, to, step);
+    }
+        break;
+    default:
+        break;
+    }
+
+    main_stack_.push(push);
 }

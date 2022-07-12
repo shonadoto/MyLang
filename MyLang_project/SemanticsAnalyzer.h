@@ -104,7 +104,6 @@ private:
     Type* CONST_CHAR();
     Type* CONST_FLOAT();
     Type* CONST_INT();
-    Type* CONST_RANGE();
     Type* CONST_STRING();
     Type* INITIALIZER_LIST();
     Type* METHOD_CALL(Type* var_type);

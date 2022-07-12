@@ -203,7 +203,10 @@ void RpnCreator::FUNCTION_DECLARATION() {
     case Type::TypeEnum::STRING:
         ret = new Data::String();
         break;
-    case Type::TypeEnum::RANGE:
+    case Type::TypeEnum::RANGE_2:
+        ret = new Data::Range();
+        break;
+    case Type::TypeEnum::RANGE_3:
         ret = new Data::Range();
         break;
     case Type::TypeEnum::ARRAY:
@@ -299,7 +302,10 @@ void RpnCreator::METHOD_DECLARATION() {
     case Type::TypeEnum::STRING:
         ret = new Data::String();
         break;
-    case Type::TypeEnum::RANGE:
+    case Type::TypeEnum::RANGE_2:
+        ret = new Data::Range();
+        break;
+    case Type::TypeEnum::RANGE_3:
         ret = new Data::Range();
         break;
     case Type::TypeEnum::ARRAY:
@@ -796,11 +802,6 @@ void RpnCreator::EXPRESSION() {
             continue;
         }
 
-        if (tokenType() == LecsicalEnum::CONST_RANGE) {
-            CONST_RANGE();
-            continue;
-        }
-
         if (tokenType() == LecsicalEnum::CONST_STRING) {
             CONST_STRING();
             continue;
@@ -1103,9 +1104,10 @@ int RpnCreator::getPrior(std::string op) {
     if (op == "&") return 10;
     if (op == "^") return 11;
     if (op == "|") return 12;
-    if (op == "in") return 13;
-    if (op == "&&") return 14;
-    if (op == "||") return 15;
+    if (op == "..") return 13;
+    if (op == "in") return 14;
+    if (op == "&&") return 15;
+    if (op == "||") return 16;
     return 16;
 }
 
