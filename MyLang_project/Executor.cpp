@@ -2990,7 +2990,10 @@ void Executor::IN() {
         {
             Data::Range* val2 = static_cast<Data::Range*>(value2);
             int64_t from = val2->from(), to = val2->to(), step = val2->step();
-            res = from <= val1 && val1 <= to && (val1 - from) % step == 0;
+            if (step > 0)
+                res = from <= val1 && val1 <= to && (val1 - from) % step == 0;
+            else
+                res = to <= val1 && val1 <= from && (val1 - to) % step == 0;
         }
         break;
         case Data::DataEnum::ARRAY:
@@ -4818,6 +4821,10 @@ void Executor::DOUBLE_POINT() {
         int from = static_cast<Data::Range*>(value1)->from();
         int to = static_cast<Data::Range*>(value1)->to();
         int step = static_cast<Data::Int*>(value2)->get();
+
+        if (step == 0)
+            throw ExecutorError("Range can not have 0 step");
+
         push = new Data::Range(from, to, step);
     }
         break;

@@ -1756,6 +1756,9 @@ Type* SemanticsAnalyzer::VARIABLE() {
         return new Type();
     }
 
+    if (!tid_->varExist(tokenName()))
+        throw SemanticsError("Undeclared variable. Name: " + tokenName(), token());
+
     Type* ret = tid_->varGet(tokenName());
     return ret;
 }
