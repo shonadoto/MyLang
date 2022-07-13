@@ -254,6 +254,7 @@ RPN::Operation::Operation(std::string operation) : Token(RpnEnum::OPERATION) {
     if (op == "&=") type_ = OperationEnum::ASSIGN_BIT_AND;
     if (op == "^=") type_ = OperationEnum::ASSIGN_BIT_XOR;
     if (op == "|=") type_ = OperationEnum::ASSIGN_BIT_OR;
+    if (op == "..") type_ = OperationEnum::DOUBLE_POINT;
 }
 
 RPN::OperationEnum RPN::Operation::type() { return type_; }

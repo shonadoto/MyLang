@@ -2,6 +2,8 @@
 
 int main(int argc, char* argv[]) {
 
+    // Semantics rpn version
+
     try {
         if (argc > 1) throw "Too many arguments. 1 needed";
         if (argc < 1) throw "Not enough arguments. 1 needed";
