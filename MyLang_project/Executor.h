@@ -106,6 +106,8 @@ private:
     void ASSIGN_BIT_AND();
     void ASSIGN_BIT_OR();
     void ASSIGN_BIT_XOR();
+
+    void DOUBLE_POINT();
 };
 
 

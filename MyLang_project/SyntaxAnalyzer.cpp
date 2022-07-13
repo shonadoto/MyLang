@@ -615,14 +615,14 @@ void SyntaxAnalyzer::WHEN() {
 // EXPRESSION
 
 void SyntaxAnalyzer::EXPRESSION() {
-    PRIORITY_16();
+    PRIORITY_17();
 }
 
 void SyntaxAnalyzer::VALUE() {
 
     if (tokenType() == LecsicalEnum::CONST_BOOL || tokenType() == LecsicalEnum::CONST_CHAR ||
         tokenType() == LecsicalEnum::CONST_INT || tokenType() == LecsicalEnum::CONST_FLOAT ||
-        tokenType() == LecsicalEnum::CONST_STRING || tokenType() == LecsicalEnum::CONST_RANGE) {
+        tokenType() == LecsicalEnum::CONST_STRING) {
         tokenNext(); // from const to smth
         return;
     }
@@ -860,42 +860,51 @@ void SyntaxAnalyzer::PRIORITY_12() {
     }
 }
 
-
 void SyntaxAnalyzer::PRIORITY_13() {
     PRIORITY_12(); // from p13 to smth
 
-    if (tokenName() == "in") {
+    if (tokenName() == "..") {
         tokenNext(); // from oper to p13
         PRIORITY_13(); // from p13 to smth
     }
 }
 
+
 void SyntaxAnalyzer::PRIORITY_14() {
     PRIORITY_13(); // from p13 to smth
 
-    if (tokenName() == "&&") {
-        tokenNext(); // from oper to p14
-        PRIORITY_14(); // from p14 to smth
+    if (tokenName() == "in") {
+        tokenNext(); // from oper to p13
+        PRIORITY_14(); // from p13 to smth
     }
 }
 
 void SyntaxAnalyzer::PRIORITY_15() {
-    PRIORITY_14(); // from p14 to smth
+    PRIORITY_14(); // from p13 to smth
 
-    if (tokenName() == "||") {
-        tokenNext(); // from oper to p15
-        PRIORITY_15(); // from p15 to smth
+    if (tokenName() == "&&") {
+        tokenNext(); // from oper to p14
+        PRIORITY_15(); // from p14 to smth
     }
 }
 
 void SyntaxAnalyzer::PRIORITY_16() {
-    PRIORITY_15(); // from p15 to smth
+    PRIORITY_15(); // from p14 to smth
+
+    if (tokenName() == "||") {
+        tokenNext(); // from oper to p15
+        PRIORITY_17(); // from p15 to smth
+    }
+}
+
+void SyntaxAnalyzer::PRIORITY_17() {
+    PRIORITY_16(); // from p15 to smth
 
     if (tokenName() == "=" || tokenName() == "+=" || tokenName() == "-=" ||
         tokenName() == "*=" || tokenName() == "/=" || tokenName() == "%=" ||
         tokenName() == "**=" || tokenName() == "<<=" || tokenName() == ">>=" ||
         tokenName() == "&=" || tokenName() == "|=" || tokenName() == "^=") {
         tokenNext(); // from oper to p16
-        PRIORITY_16(); // from p16 to smth
+        PRIORITY_17(); // from p16 to smth
     }
 }

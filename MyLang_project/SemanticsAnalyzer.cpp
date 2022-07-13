@@ -90,14 +90,16 @@ bool SemanticsAnalyzer::goodCast(Type* first, Type* second) {
             tInt = int(Type::TypeEnum::INT),
             tFloat = int(Type::TypeEnum::FLOAT),
             tString = int(Type::TypeEnum::STRING),
-            tRange = int(Type::TypeEnum::RANGE);
+            tRange_2 = int(Type::TypeEnum::RANGE_2),
+            tRange_3 = int(Type::TypeEnum::RANGE_3);
         std::map<int, std::vector<int>> casts = {
             {tBool, {tBool, tChar, tInt, tFloat, tString}},
             {tChar, {tBool, tChar, tInt, tFloat, tString}},
             {tInt, {tBool, tChar, tInt, tFloat, tString}},
             {tFloat, {tBool, tChar, tInt, tFloat, tString}},
             {tString, {tBool, tChar, tInt, tFloat, tString}},
-            {tRange, {}}
+            {tRange_2, {}},
+            {tRange_3, {}}
         };
 
         return std::find(casts[int(first->baseType())].begin(), casts[int(first->baseType())].end(), int(second->baseType())) != casts[int(first->baseType())].end();
@@ -403,6 +405,7 @@ void SemanticsAnalyzer::VARIABLE_DECLARATION() {
 
                 if (*var_type < Type("string") && *expr_type < Type("string"));
                 else if (*var_type == *expr_type);
+                else if (var_type->baseType() == Type::TypeEnum::RANGE_3 && expr_type->baseType() == Type::TypeEnum::RANGE_2);
                 else throw SemanticsError(error, token());
 
             }
@@ -550,7 +553,7 @@ void SemanticsAnalyzer::OPERATOR() {
                 throw SemanticsError("Can not use input with rvalue", token());
 
             if (analysis_stage_ == 1 &&
-                (expr_type->baseType() == Type::TypeEnum::ARRAY || expr_type->baseType() == Type::TypeEnum::RANGE))
+                (expr_type->baseType() == Type::TypeEnum::ARRAY || expr_type->baseType() == Type::TypeEnum::RANGE_2 || expr_type->baseType() == Type::TypeEnum::RANGE_3))
                 throw SemanticsError("Can not use input with array or range.", token());
 
             if (tokenName() == ",")
@@ -711,7 +714,8 @@ void SemanticsAnalyzer::FOR() {
 
     if (analysis_stage_ == 1) {
 
-        if (!(*var_type == Type("int") && *expr_type == Type("range"))
+        if (!(*var_type == Type("int") && *expr_type == Type(Type::TypeEnum::RANGE_2)) &&
+            !(*var_type == Type("int") && *expr_type == Type(Type::TypeEnum::RANGE_3))
             && !(*var_type == Type("char") && *expr_type == Type("string")) &&
             (expr_type->parent() == NULL || *var_type != expr_type->parent()))
             throw SemanticsError("Can not iterate with " + var_type->toString() + " by " + expr_type->toString() + ".", token());
@@ -791,7 +795,7 @@ void SemanticsAnalyzer::WHEN() {
 
 
 // EXPRESSION
-
+/*
 Type* SemanticsAnalyzer::EXPRESSION() {
     if (analysis_stage_ == 0) {
         PRIORITY_16();
@@ -977,7 +981,7 @@ Type* SemanticsAnalyzer::METHOD_CALL() {
     }
     return methods_[method];
 }
-*/
+
 
 Type* SemanticsAnalyzer::METHOD_CALL(Type* var_type) {
     tokenNext(); // from . to name
@@ -1162,7 +1166,7 @@ Type* SemanticsAnalyzer::PRIORITY_3() {
         if (analysis_stage_ == 0) {
             return new Type();
         }
-        
+
         Type* ret = operate(left, operation, right);
         return ret;
     }
@@ -1192,7 +1196,7 @@ Type* SemanticsAnalyzer::PRIORITY_5() {
 
     if (tokenName() == "*" || tokenName() == "/" || tokenName() == "%") {
         std::string operation = tokenName();
-        tokenNext(); // from */% to p5
+        tokenNext(); // from oper to p5
         Type* right = PRIORITY_5(); // from p5 to smth
         if (analysis_stage_ == 0) {
             return new Type();
@@ -1337,6 +1341,7 @@ Type* SemanticsAnalyzer::PRIORITY_12() {
 
 Type* SemanticsAnalyzer::PRIORITY_13() {
     Type* left = PRIORITY_12(); // from p13 to smth
+
 
     if (tokenName() == "in") {
         std::string operation = tokenName();
@@ -1507,6 +1512,563 @@ Type* SemanticsAnalyzer::operate(Type* left, std::string operation, Type* right)
         if (right->parent() != NULL && *left == *(right->parent()) ||
             *left == Type("int") && *right == Type(Type::TypeEnum::RANGE) ||
             *left == Type("char") && *right == Type("string")) return new Type("bool");
+        throw SemanticsError(error, token());
+    }
+}
+
+Type* SemanticsAnalyzer::operate(Type* left, std::string operation) {
+    std::string error = "Can not " + operation + " with " + left->toString() + ".";
+    if (operation == "!") {
+        if (*left == Type("bool")) return left;
+        throw SemanticsError(error, token());
+    }
+    if (operation == "~") {
+        if (*left == Type("int")) return left;
+        throw SemanticsError(error, token());
+    }
+    if (operation == "@" || operation == "_") {
+        if (*left == Type("int") || *left == Type("float")) return left;
+        if (*left == Type("bool") || *left == Type("char")) return new Type("int");
+        throw SemanticsError(error, token());
+    }
+}
+
+*/
+
+// fixed
+
+Type* SemanticsAnalyzer::EXPRESSION() {
+    std::stack<std::string> st;
+    int balance = 0;
+
+    std::vector<std::pair<Type*, std::string>> rpn;
+
+    for (;
+        !(tokenName() == ":" || tokenName() == "," ||
+            tokenName() == ";" || tokenName() == "}" || tokenName() == "]" ||
+            (balance == 0 && tokenName() == ")"));
+        tokenNext()) {
+        Type* type = NULL;
+        if (tokenType() == LecsicalEnum::NAME) {
+            tokenNext();
+            if (tokenName() == "(") {
+                tokenPrev();
+                type = FUNCTION_CALL();
+            }
+            else {
+                tokenPrev();
+                type = VARIABLE();
+            }
+            rpn.push_back({ type, "" });
+            continue;
+        }
+
+        if (tokenType() == LecsicalEnum::CONST_BOOL) {
+            type = CONST_BOOL();
+            rpn.push_back({ type, "" });
+            continue;
+        }
+
+        if (tokenType() == LecsicalEnum::CONST_CHAR) {
+            type = CONST_CHAR();
+            rpn.push_back({ type, "" });
+            continue;
+        }
+
+        if (tokenType() == LecsicalEnum::CONST_INT) {
+            type = CONST_INT();
+            rpn.push_back({ type, "" });
+            continue;
+        }
+
+        if (tokenType() == LecsicalEnum::CONST_FLOAT) {
+            type = CONST_FLOAT();
+            rpn.push_back({ type, "" });
+            continue;
+        }
+
+        if (tokenType() == LecsicalEnum::CONST_STRING) {
+            type = CONST_STRING();
+            rpn.push_back({ type, "" });
+        }
+
+        if (tokenName() == "(") {
+            tokenNext();
+            type = EXPRESSION();
+            rpn.push_back({ type, "" });
+            continue;
+        }
+
+        if (tokenName() == ")") {
+            balance--;
+            while (st.top() != "(") {
+                rpn.push_back({ NULL, st.top() });
+                st.pop();
+            }
+            st.pop();
+            continue;
+        }
+
+        if (tokenType() == LecsicalEnum::OPERATION) {
+            while (!st.empty() && st.top() != "(" && getPrior(st.top()) < getPrior(tokenName())) {
+                rpn.push_back({ NULL, st.top() });
+                st.pop();
+            }
+            while (!st.empty() && st.top() != "(" && getPrior(st.top()) == getPrior(tokenName()) && !isRightAssoc(tokenName())) {
+                rpn.push_back({ NULL, st.top() });
+                st.pop();
+            }
+            st.push(tokenName());
+            continue;
+        }
+
+        if (tokenName() == ".") {
+            type = METHOD_CALL((rpn.end() - 1)->first);
+            tokenPrev();
+            rpn.pop_back();
+            rpn.push_back({ type, "" });
+            continue;
+        }
+
+        if (tokenName() == "[") {
+            type = INDEX_CALL();
+            rpn.push_back({ type, "" });
+            rpn.push_back({ NULL, "[]" });
+            continue;
+        }
+
+        if (isType(token())) {
+            type = CAST();
+            rpn.push_back({ type, "" });
+            continue;
+        }
+
+        if (tokenName() == "it") {
+            if (analysis_stage_ == 1)
+                type = tid_->varGet("it");
+            else
+                type = new Type();
+            rpn.push_back({ type, "" });
+            continue;
+        }
+
+        if (tokenName() == "{") {
+            type = INITIALIZER_LIST();
+            rpn.push_back({ type, "" });
+            continue;
+        }
+    }
+
+    while (!st.empty()) {
+        if (st.top() != "(")
+            rpn.push_back({ NULL, st.top() });
+        st.pop();
+    }
+
+    if (analysis_stage_ == 0)
+        return new Type();
+    return calcRpn(rpn);
+
+}
+
+int SemanticsAnalyzer::getPrior(std::string op) {
+    if (op == "[]") return 2;
+    if (op == "**") return 3;
+    if (op == "!") return 4;
+    if (op == "~") return 4;
+    if (op == "@") return 4;
+    if (op == "_") return 4;
+    if (op == "*") return 5;
+    if (op == "/") return 5;
+    if (op == "%") return 5;
+    if (op == "+") return 6;
+    if (op == "-") return 6;
+    if (op == "<<") return 7;
+    if (op == ">>") return 7;
+    if (op == "<") return 8;
+    if (op == ">") return 8;
+    if (op == "<=") return 8;
+    if (op == ">=") return 8;
+    if (op == "==") return 9;
+    if (op == "!=") return 9;
+    if (op == "&") return 10;
+    if (op == "^") return 11;
+    if (op == "|") return 12;
+    if (op == "..") return 13;
+    if (op == "in") return 14;
+    if (op == "&&") return 15;
+    if (op == "||") return 16;
+    return 17;
+}
+
+bool SemanticsAnalyzer::isRightAssoc(std::string op) {
+    for (auto& i : { "!", "~", "@", "_", "**", })
+        if (op == i)
+            return true;
+    return false;
+}
+
+Type* SemanticsAnalyzer::FUNCTION_CALL() {
+    std::string func_name = tokenName();
+    tokenNext(); // from name to (
+    std::vector<Type*> args;
+
+    while (tokenName() != ")") {
+        tokenNext(); // from ( or , to expr
+        if (tokenName() == ")") break;
+
+        Type* expr_type = EXPRESSION(); // from expression to , or )
+        args.push_back(expr_type);
+        if (tokenName() == ")") break;
+    }
+
+    FuncId func(func_name, args);
+
+    if (analysis_stage_ == 1)
+        function_calls_.push(func);
+
+
+    if (analysis_stage_ == 1 && funcs_.find(func) == funcs_.end()) {
+        std::string error = "Undeclared function: ";
+        error += func_name;
+        error += "(";
+        for (int i = 0; i < args.size(); ++i) {
+            error += args[i]->toString();
+            if (i != args.size() - 1)
+                error += ", ";
+        }
+        error += ")";
+
+        throw SemanticsError(error, token());
+    }
+    tokenNext(); // from ) to smth
+
+    tokenPrev(); // for rpn
+    if (analysis_stage_ == 0) {
+        return new Type();
+    }
+    Type* ret = funcs_[func];
+    return funcs_[func];
+}
+
+Type* SemanticsAnalyzer::VARIABLE() {
+    if (analysis_stage_ == 0) {
+        return new Type();
+    }
+
+    if (!tid_->varExist(tokenName()))
+        throw SemanticsError("Undeclared variable. Name: " + tokenName(), token());
+
+    Type* ret = tid_->varGet(tokenName());
+    return ret;
+}
+
+Type* SemanticsAnalyzer::CONST_BOOL() {
+    if (analysis_stage_ == 0) {
+        return new Type();
+    }
+
+    Type* ret = new Type("bool");
+    return ret;
+}
+
+Type* SemanticsAnalyzer::CONST_CHAR() {
+    if (analysis_stage_ == 0) {
+        return new Type();
+    }
+
+    Type* ret = new Type("char");
+    return ret;
+}
+
+Type* SemanticsAnalyzer::CONST_INT() {
+    if (analysis_stage_ == 0) {
+        return new Type();
+    }
+
+    Type* ret = new Type("int");
+    return ret;
+}
+
+Type* SemanticsAnalyzer::CONST_FLOAT() {
+    if (analysis_stage_ == 0) {
+        return new Type();
+    }
+
+    Type* ret = new Type("float");
+    return ret;
+}
+
+Type* SemanticsAnalyzer::CONST_STRING() {
+    if (analysis_stage_ == 0) {
+        return new Type();
+    }
+
+    Type* ret = new Type("string");
+    return ret;
+}
+
+Type* SemanticsAnalyzer::INITIALIZER_LIST() {
+    Type* type = new Type("array", new Type());
+    Type* prev = NULL;
+    while (tokenName() != "}") {
+        tokenNext(); // from { to smth
+        if (tokenName() == "}") break;
+        Type* expr = EXPRESSION();
+
+        if (type->parent()->baseType() == Type::TypeEnum::VOID)
+            type = new Type("array", expr);
+        else if (*type->parent() != *expr)
+            throw SemanticsError(type->toString() + " can not contain " + expr->toString() + " elements.", token());
+
+    }
+
+    if (analysis_stage_ == 0) {
+        return new Type();
+    }
+
+    return type;
+
+}
+
+Type* SemanticsAnalyzer::METHOD_CALL(Type* var_type) {
+
+    if (var_type->baseType() == Type::TypeEnum::RANGE_2) var_type = new Type("range");
+
+    tokenNext(); // from . to name
+    std::string method_name = tokenName();
+    tokenNext(); // from name to (
+
+    std::vector<Type*> args;
+    Type* one_arg = NULL;
+    while (tokenName() != ")") {
+        tokenNext(); // from ( or , to expr
+        if (tokenName() == ")") break;
+
+        Type* expr_type = EXPRESSION(); // from expression to , or )
+        one_arg = expr_type;
+        args.push_back(expr_type);
+        if (tokenName() == ")") break;
+    }
+
+    MethodId method(var_type, method_name, args);
+    if (analysis_stage_ == 1)
+        method_calls_.push(method);
+
+    if (analysis_stage_ == 1 && (method.methodType()->baseType() == Type::TypeEnum::ARRAY ||
+        method.methodType()->baseType() == Type::TypeEnum::STRING) &&
+        (method_name == "size" || method_name == "popBack") &&
+        method.argsNum() == 0) {
+        tokenNext(); // from ) to smth
+        if (method_name == "size")
+            return new Type("int");
+        return new Type();
+    }
+
+    if (analysis_stage_ == 1 && (method.methodType()->baseType() == Type::TypeEnum::ARRAY ||
+        method.methodType()->baseType() == Type::TypeEnum::STRING) &&
+        method_name == "pushBack" &&
+        method.argsNum() == 1) {
+        tokenNext(); // from ) to smth
+
+
+        Type* m_type = method.methodType();
+        if (m_type->baseType() == Type::TypeEnum::STRING)
+            m_type = new Type("char");
+        else
+            m_type = m_type->parent();
+
+
+        if (*m_type != *one_arg)
+            throw SemanticsError("Can not pushBack " + one_arg->toString() + " to " + method.methodType()->toString() + ".", token());
+
+        return new Type();
+    }
+
+    if (analysis_stage_ == 1 && methods_.find(method) == methods_.end()) {
+
+        std::string error = "Undeclared method: ";
+        error += var_type->toString();
+        error += ".";
+        error += method_name;
+        error += "(";
+        for (int i = 0; i < args.size(); ++i) {
+            error += args[i]->toString();
+            if (i != args.size() - 1)
+                error += ", ";
+        }
+        error += ")";
+        throw SemanticsError(error, token());
+    }
+    tokenNext(); // from ) to smth
+
+    if (analysis_stage_ == 0) {
+        return new Type();
+    }
+    return methods_[method];
+}
+
+Type* SemanticsAnalyzer::INDEX_CALL() {
+    tokenNext(); // from [ to expr
+    Type* type = EXPRESSION();
+    return type;
+}
+
+Type* SemanticsAnalyzer::CAST() {
+    Type* type = TYPE();
+    tokenNext(); // from ( to smth
+    Type* expr = EXPRESSION();
+
+    if (analysis_stage_ == 0) {
+        return new Type();
+    }
+
+    if (goodCast(type, expr)) {
+        return type;
+    }
+    throw SemanticsError("Can not cast " + expr->toString() + " to " + type->toString() + ".", token());
+}
+
+Type* SemanticsAnalyzer::calcRpn(std::vector<std::pair<Type*, std::string>> rpn) {
+    std::stack<Type*> st;
+    for (auto& p : rpn) {
+        if (p.first != NULL) {
+            st.push(p.first);
+            continue;
+        }
+        Type* ret = NULL;
+        if (isUnary(p.second)) {
+            Type* value = st.top();
+            st.pop();
+            ret = operate(value, p.second);
+        }
+        else {
+            Type* second = st.top();
+            st.pop();
+            Type* first = st.top();
+            st.pop();
+            ret = operate(first, p.second, second);
+        }
+        st.push(ret);
+    }
+
+    return st.top();
+}
+
+bool SemanticsAnalyzer::isUnary(std::string oper) {
+    if (oper == "!" || oper == "~" || oper == "@" || oper == "_")
+        return true;
+    return false;
+}
+
+Type* SemanticsAnalyzer::operate(Type* left, std::string operation, Type* right) {
+    std::string error = "Can not " + operation + " with " + left->toString() + " and " + right->toString() + ".";
+
+    if (operation == "=") {
+        if (left->baseType() == Type::TypeEnum::RANGE_3 && right->baseType() == Type::TypeEnum::RANGE_2) return left;
+        if (!left->isVar()) throw SemanticsError("Left operand must be lvalue", token());
+        if (*left < Type("string") && *right < Type("string")) return left;
+        if (left->baseType() == Type::TypeEnum::ARRAY && *right == Type("array", new Type())) return left;
+        if (*left == *right) return left;
+        throw SemanticsError(error, token());
+    }
+
+    std::vector<std::string> assignable = { "+=", "-=", "*=", "/=", "%=", "**=", "<<=", ">>=", "&=", "|=", "^=" };
+    if (std::find(assignable.begin(), assignable.end(), operation) != assignable.end()) {
+        if (!left->isVar()) throw SemanticsError("Left operand must be lvalue", token());
+        operation.pop_back();
+        try {
+            right = operate(left, operation, right);
+        }
+        catch (SemanticsError err) {
+            throw SemanticsError(error, token());
+        }
+        if (*left < Type("string") && *right < Type("string")) return left;
+        try {
+            return operate(left, "=", right);
+        }
+        catch (SemanticsError err) {
+            throw SemanticsError(error, token());
+        }
+    }
+    if (operation == "**" || operation == "*" || operation == "/" || operation == "-") {
+        if (*left < Type("string") && *right < Type("string")) {
+            if (*left < *right)
+                return right;
+            return left;
+        }
+        throw SemanticsError(error, token());
+    }
+
+    if (operation == "+") {
+        if (*left < Type("string") && *right < Type("string")) {
+            if (*left < *right)
+                return right;
+            return left;
+        }
+        if (*left == Type("string") && *right == Type("char"))
+            return left;
+        if (*left == Type("char") && *right == Type("string"))
+            return right;
+        if (*left == Type("string") && *right == Type("string"))
+            return left;
+        throw SemanticsError(error, token());
+    }
+
+    if (operation == "<<" || operation == ">>" || operation == "%") {
+        if (*left < Type("float") && *right < Type("float")) {
+            if (*left < *right)
+                return right;
+            return left;
+        }
+        throw SemanticsError(error, token());
+    }
+
+    if (operation == "<" || operation == ">" || operation == "<=" || operation == ">=") {
+        if (*left == *right && *left < Type(Type::TypeEnum::RANGE_2)) return new Type("bool");
+        throw SemanticsError(error, token());
+    }
+
+    if (operation == "==" || operation == "!=") {
+        if (*left == *right) return new Type("bool");
+        throw SemanticsError(error, token());
+    }
+
+    if (operation == "&" || operation == "|" || operation == "^") {
+        if (*left < Type("float") && *right < Type("float")) {
+            if (*left < *right)
+                return right;
+            return left;
+        }
+        throw SemanticsError(error, token());
+    }
+
+    if (operation == "&&" || operation == "||") {
+        if (*left == Type("bool") && *right == Type("bool")) return left;
+        throw SemanticsError(error, token());
+    }
+
+    if (operation == "in") {
+        if (right->parent() != NULL && *left == *(right->parent()) ||
+            *left == Type("int") && *right == Type(Type::TypeEnum::RANGE_2) ||
+            *left == Type("int") && *right == Type(Type::TypeEnum::RANGE_3) ||
+            *left == Type("char") && *right == Type("string")) return new Type("bool");
+        throw SemanticsError(error, token());
+    }
+
+    if (operation == "[]") {
+        if (*right != Type("int")) throw SemanticsError("Only int expression in [] are possible.", token());
+        if (*left == Type("string")) return new Type("char");
+        if (left->baseType() == Type::TypeEnum::ARRAY) {
+            left->parent()->setIsVar(true);
+            return left->parent();
+        }
+        throw SemanticsError(error, token());
+    }
+
+    if (operation == "..") {
+        if (*left == Type("int") && *right == Type("int")) return new Type(Type::TypeEnum::RANGE_2);
+        if (*left == Type(Type::TypeEnum::RANGE_2) && *right == Type("int")) return new Type(Type::TypeEnum::RANGE_3);
         throw SemanticsError(error, token());
     }
 }

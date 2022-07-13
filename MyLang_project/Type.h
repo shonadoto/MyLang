@@ -6,7 +6,7 @@
 class Type {
 public:
     enum class TypeEnum {
-        BOOL, CHAR, INT, FLOAT, STRING, RANGE, ARRAY, VOID
+        BOOL, CHAR, INT, FLOAT, STRING, RANGE_2, RANGE_3, ARRAY, VOID
     };
     Type(TypeEnum base_type, Type* parent = NULL, bool is_var = false);
     Type(std::string type = "void", Type* parent = NULL, bool is_var = false);

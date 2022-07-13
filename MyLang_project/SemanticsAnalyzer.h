@@ -63,6 +63,7 @@ private:
     void FOR();
     void WHEN();
 
+    /*
     Type* EXPRESSION();
     Type* VALUE();
     Type* CAST();
@@ -86,6 +87,28 @@ private:
     Type* PRIORITY_14();
     Type* PRIORITY_15();
     Type* PRIORITY_16();
+    */
+
+
+    // fixed
+
+    int getPrior(std::string oper);
+    bool isRightAssoc(std::string oper);
+    Type* calcRpn(std::vector<std::pair<Type*, std::string>> rpn);
+    bool isUnary(std::string oper);
+
+    Type* EXPRESSION();
+    Type* FUNCTION_CALL();
+    Type* VARIABLE();
+    Type* CONST_BOOL();
+    Type* CONST_CHAR();
+    Type* CONST_FLOAT();
+    Type* CONST_INT();
+    Type* CONST_STRING();
+    Type* INITIALIZER_LIST();
+    Type* METHOD_CALL(Type* var_type);
+    Type* INDEX_CALL();
+    Type* CAST();
 };
 
 #endif // !SEMANTICS_ANALYZER
