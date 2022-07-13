@@ -207,3 +207,9 @@ void array<string>.sort() {
 	}
 
 }
+
+int range.count() {
+	int cnt = 0;
+	for (int i : it) cnt += 1;
+	return cnt;
+}
